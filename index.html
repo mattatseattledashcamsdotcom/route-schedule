@@ -743,7 +743,7 @@ function buildEditPanel(day) {
         </div>
         <div class="edit-zip-area">${chips}</div>
         <div class="add-zip-row">
-          <input type="text" inputmode="numeric" maxlength="5" placeholder="Add ZIP…" id="add-zip-${slotId}">
+          <input type="text" inputmode="numeric" placeholder="98001, 98002…" id="add-zip-${slotId}">
           <button onclick="editAddZip('${day}','${slot}','add-zip-${slotId}')">Add</button>
         </div>
       </div>`;
@@ -775,12 +775,15 @@ function editRemoveZip(zip, day, slot) {
 
 function editAddZip(day, slot, inputId) {
   const input = document.getElementById(inputId);
-  const zip = input.value.trim();
-  if (!/^\d{5}$/.test(zip)) { input.style.borderColor = '#ef4444'; return; }
+  const zips = input.value.split(/[\s,]+/).map(z => z.trim()).filter(z => z.length);
+  const invalid = zips.filter(z => !/^\d{5}$/.test(z));
+  if (invalid.length) { input.style.borderColor = '#ef4444'; return; }
   input.style.borderColor = '';
-  if (!SCHEDULE.availability[zip]) SCHEDULE.availability[zip] = [];
-  const already = SCHEDULE.availability[zip].some(s => s.day === day && s.slot === slot);
-  if (!already) SCHEDULE.availability[zip].push({ day, slot });
+  zips.forEach(zip => {
+    if (!SCHEDULE.availability[zip]) SCHEDULE.availability[zip] = [];
+    const already = SCHEDULE.availability[zip].some(s => s.day === day && s.slot === slot);
+    if (!already) SCHEDULE.availability[zip].push({ day, slot });
+  });
   input.value = '';
   saveEdits();
   buildEditPanel(day);
