@@ -1,11 +1,12 @@
-const CACHE = 'route-schedule-v1';
+const CACHE = 'route-schedule-v2';
+const BASE = self.registration.scope;
 const SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/data/schedule.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  BASE,
+  BASE + 'index.html',
+  BASE + 'manifest.json',
+  BASE + 'data/schedule.json',
+  BASE + 'icon-192.png',
+  BASE + 'icon-512.png'
 ];
 
 self.addEventListener('install', e => {
