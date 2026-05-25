@@ -11,6 +11,15 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="config.js"></script>
+  <script>
+    // Fallback credentials for deployed version
+    if (typeof window.GAPI_CONFIG === 'undefined') {
+      window.GAPI_CONFIG = {
+        CLIENT_ID: '63101285536-s3k8r8mur1kkb3h8tjadshiuj6gkg3br.apps.googleusercontent.com',
+        API_KEY:   'AIzaSyBHscBwnS4qerbairhzS_Kp904XDNetakc'
+      };
+    }
+  </script>
   <title>Route Schedule</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
