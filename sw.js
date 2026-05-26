@@ -1,4 +1,4 @@
-const CACHE = 'route-schedule-v2';
+const CACHE = 'route-schedule-v3';
 const BASE = self.registration.scope;
 const SHELL = [
   BASE,
