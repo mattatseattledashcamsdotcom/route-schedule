@@ -900,7 +900,7 @@ function getNextSlots(zip, events, count = 3) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  for (let d = 0; d < 28 && results.length < count; d++) {
+  for (let d = 0; d < 60 && results.length < count; d++) {
     const date = new Date(today);
     date.setDate(today.getDate() + d);
     const jsDay = date.getDay();
@@ -957,7 +957,7 @@ function renderSlotResults(results, zip) {
     : '<p style="font-size:0.75rem;color:var(--dim);margin-bottom:12px;">⚠ Calendar not connected — showing schedule availability only</p>';
 
   if (results.length === 0) {
-    resultsEl.innerHTML = `${calNote}<div class="state-msg"><div class="icon">😅</div><h3>No open slots in 28 days</h3><p>All slots for ZIP ${zip} appear to be booked. Check back later or check the schedule panel.</p></div>`;
+    resultsEl.innerHTML = `${calNote}<div class="state-msg"><div class="icon">😅</div><h3>No open slots in 60 days</h3><p>All slots for ZIP ${zip} appear to be booked. Check back later or check the schedule panel.</p></div>`;
     return;
   }
 
@@ -1168,16 +1168,7 @@ async function initGapiClient() {
     discoveryDocs: [DISCOVERY_DOC]
   });
   gapiReady = true;
-  // Try restoring a saved token
-  const saved = localStorage.getItem('gcal_token');
-  if (saved) {
-    try {
-      gapi.client.setToken(JSON.parse(saved));
-      await verifyToken();
-    } catch {
-      localStorage.removeItem('gcal_token');
-    }
-  }
+  tryAutoReconnect();
 }
 
 function initGIS() {
@@ -1188,6 +1179,28 @@ function initGIS() {
     callback: handleTokenResponse
   });
   gisReady = true;
+  tryAutoReconnect();
+}
+
+// Called after both GAPI and GIS finish loading.
+// If a saved token exists and is still fresh, use it directly.
+// If it's expired, ask GIS for a silent refresh (no popup).
+function tryAutoReconnect() {
+  if (!gapiReady || !gisReady) return; // wait for both
+  const saved = localStorage.getItem('gcal_token');
+  if (!saved) return; // user never connected — nothing to restore
+
+  const savedAt = parseInt(localStorage.getItem('gcal_token_time') || '0');
+  const ageSeconds = (Date.now() - savedAt) / 1000;
+
+  if (ageSeconds < 3000) {
+    // Token is < 50 minutes old — still valid, use it directly
+    gapi.client.setToken(JSON.parse(saved));
+    fetchCalendarEvents();
+  } else {
+    // Token expired — try a silent refresh (no consent popup if user already granted)
+    tokenClient.requestAccessToken({ prompt: '' });
+  }
 }
 
 async function handleCalAuth() {
@@ -1211,7 +1224,7 @@ async function handleCalAuth() {
     return;
   }
 
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+  tokenClient.requestAccessToken({ prompt: '' });
 }
 
 async function handleTokenResponse(resp) {
@@ -1220,6 +1233,7 @@ async function handleTokenResponse(resp) {
     return;
   }
   localStorage.setItem('gcal_token', JSON.stringify(gapi.client.getToken()));
+  localStorage.setItem('gcal_token_time', Date.now().toString());
   await fetchCalendarEvents();
 }
 
@@ -1231,7 +1245,7 @@ async function verifyToken() {
 async function fetchCalendarEvents() {
   const now = new Date();
   const future = new Date(now);
-  future.setDate(now.getDate() + 28);
+  future.setDate(now.getDate() + 60);
 
   try {
     const resp = await gapi.client.calendar.events.list({
